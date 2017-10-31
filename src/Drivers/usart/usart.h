@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include "usart_queue.h"
 
-void UartInit(uint32_t baud);
+typedef void (*CallbackHandler)(int16_t, int16_t, int16_t);
+
+void UartInit(uint32_t baud, CallbackHandler handler);
 void UartSend(uint8_t* data, uint8_t length);
 int  sendchar(int ch);
 

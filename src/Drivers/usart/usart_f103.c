@@ -5,14 +5,21 @@
 #include "stm32f4xx_gpio.h"             // Keil::Device:StdPeriph Drivers:GPIO
 
 Queue _sendQueue;
+CallbackHandler _callback;
 
-void UartInit(uint32_t baud)
+const int accSize = 3 * 2;
+uint8_t acc[accSize];
+int accIndex = 0;
+
+void UartInit(uint32_t baud, CallbackHandler callback)
 {
+  _callback = callback;
   
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
     
   //Настройка пинов USART
+#include "stm32f4xx.h"                  // Device header
 	GPIO_InitTypeDef gpioInit;
   
   //TX - PA9
@@ -23,7 +30,15 @@ void UartInit(uint32_t baud)
   gpioInit.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_Init(GPIOA, &gpioInit);
   
+  gpioInit.GPIO_Mode = GPIO_Mode_AF;
+  gpioInit.GPIO_Pin = GPIO_Pin_10;
+  gpioInit.GPIO_Speed = GPIO_Speed_50MHz;
+  gpioInit.GPIO_OType = GPIO_OType_PP;
+  gpioInit.GPIO_PuPd = GPIO_PuPd_UP;
+  GPIO_Init(GPIOA, &gpioInit);
+  
   GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);
+  GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);
   
 	//Настройка USART
 	USART_InitTypeDef usartInit;
@@ -48,6 +63,8 @@ void UartInit(uint32_t baud)
 	init.NVIC_IRQChannelSubPriority = 0;
 	init.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&init);
+  
+  USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 }
 
 
@@ -86,5 +103,18 @@ void USART1_IRQHandler()
         
         uint8_t c = Queue_Pull(&_sendQueue);
         USART_SendData(USART1, c);
-    }
+   }
+   else if(USART_GetITStatus(USART1, USART_IT_RXNE)!=RESET)
+   {
+      acc[accIndex++] = (uint8_t)USART_ReceiveData(USART1);
+      if(accIndex == accSize)
+      {
+        int16_t x = *((uint16_t*)acc);
+        int16_t y = *((uint16_t*)acc + 1);
+        int16_t z = *((uint16_t*)acc + 2);
+        _callback(x, y, z);
+        
+        accIndex = 0;
+      }
+   }
 }

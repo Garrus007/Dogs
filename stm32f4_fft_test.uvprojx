@@ -380,6 +380,11 @@
           <GroupName>Main</GroupName>
           <Files>
             <File>
+              <FileName>main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\Main\main.c</FilePath>
+            </File>
+            <File>
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\Main\system_stm32f4xx.c</FilePath>
@@ -400,14 +405,14 @@
               <FilePath>.\src\Main\fp_utils.h</FilePath>
             </File>
             <File>
-              <FileName>data.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\Main\data.c</FilePath>
-            </File>
-            <File>
               <FileName>utils.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\Main\utils.c</FilePath>
+            </File>
+            <File>
+              <FileName>wavelet.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\Main\wavelet.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -428,11 +433,6 @@
               <FileName>arm_cortexM4l_math.lib</FileName>
               <FileType>4</FileType>
               <FilePath>.\Libraries\CMSIS\Lib\ARM\arm_cortexM4l_math.lib</FilePath>
-            </File>
-            <File>
-              <FileName>main.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\Main\main.c</FilePath>
             </File>
             <File>
               <FileName>arm_cortexM4lf_math.lib</FileName>
