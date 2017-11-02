@@ -21,8 +21,8 @@ void DataReceived(int16_t x, int16_t y, int16_t z)
     uint16_t currentSteps = waveletGetStepsCount();
     uint32_t duration = DwtGetTick() - t0;
     
-    //printf("%d\n", currentSteps);
-    printf("%d\t%f\n", currentSteps, DurationMs(duration));
+    printf("%d\n", currentSteps);
+    //printf("%d\t%f\n", currentSteps, DurationMs(duration));
     
     dataCount=0;
   }

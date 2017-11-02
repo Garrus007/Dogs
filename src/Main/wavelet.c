@@ -1,5 +1,5 @@
 #include "wavelet.h"
-
+#include "gauss.h"
 
 
 #define N_FREQS 85
@@ -8,20 +8,22 @@
 #define wavelet_dofmin  2.0f
 #define wavelet_gamma   2.320f
 #define PI_1_4          0.75112554f //powf(PI, -0.25)
-#define wavelet_flambda ((4 * PI) / (wavelet_f0 + sqrtf(2.0f + wavelet_f0 * wavelet_f0)))
+#define wavelet_flambda 1.03304365f //((4 * PI) / (wavelet_f0 + sqrtf(2.0f + wavelet_f0 * wavelet_f0)))
 
 float BUFFER[MAX_BUFFER_SIZE];
 float FFT_RE[MAX_BUFFER_SIZE];
 float FFT_IM[MAX_BUFFER_SIZE];
+float FFT_SQR[MAX_BUFFER_SIZE];
 uint16_t BUFFER_SIZE = 0;
 
-
 ////////////////////////////////////////////////////////////////////////////////
+
+
 
 float wavelet_psi_ft(float f) {
     
     float f_diff = f - wavelet_f0;
-    return PI_1_4 * expf(-0.5f * f_diff * f_diff);
+    return PI_1_4 * expf(-0.5f * f_diff * f_diff);//gauss(f_diff);
 }
 
 uint16_t bit_reverse(uint16_t a, uint16_t b) {
@@ -154,6 +156,8 @@ uint16_t steps()
 
     /* perform FT */
     fft(BUFFER, FFT_RE, FFT_IM, MAX_BUFFER_SIZE);    
+    for(int i = 0; i<MAX_BUFFER_SIZE; i++)
+      FFT_SQR[i] = (FFT_RE[i] * FFT_RE[i] + FFT_IM[i] * FFT_IM[i]);
 
     float max_power = 0;
     float max_freq = 0;
@@ -161,10 +165,14 @@ uint16_t steps()
     float dofmin = wavelet_dofmin;     // Degrees of freedom with no smoothing
     float gamma_fac = wavelet_gamma;   // Time-decorrelation factor
     
+    float scale = s0;
+    float ds = powf(2.0f, dj); //1.059463f; 
+    float baseFreq = ftfreq(1, MAX_BUFFER_SIZE);
+    
     
     for (int i = 0; i < N_FREQS; ++i) 
     {
-        float scale = s0 * powf(2.0, i * dj);
+        //float scale = s0 * powf(2.0, i * dj);
         float freq = 1 / (wavelet_flambda * scale);
         float power = 0;
      
@@ -173,8 +181,8 @@ uint16_t steps()
             
             float psi_ft = wavelet_psi_ft(scale * ftfreq(k, MAX_BUFFER_SIZE));
             
-            float psi_ft_bar = scale * ftfreq(1, MAX_BUFFER_SIZE) * psi_ft * psi_ft;
-            float w2 = psi_ft_bar * (FFT_RE[k] * FFT_RE[k] + FFT_IM[k] * FFT_IM[k]);
+            float psi_ft_bar = scale * baseFreq * psi_ft * psi_ft;
+            float w2 = psi_ft_bar * FFT_SQR[k];
             power += (w2 - power) / (k + 1);
         }
         
@@ -186,15 +194,20 @@ uint16_t steps()
             float dof = BUFFER_SIZE;
             if (dof < 1) { dof = 1; }
             
-            dof = dofmin * sqrtf(1 + powf(dof / gamma_fac / scale, 2));
+            float wtf =  dof / gamma_fac / scale;
+            float sqrtRes;
+            arm_sqrt_f32(1 + wtf*wtf, &sqrtRes);
+            dof = dofmin * sqrtRes;
             
             if (dof < dofmin) { dof = dofmin; }
             
             float chisquare = chi2_ppf_95(dof) / dof;
-            float fft_theor = variance * (1 - alpha*alpha) / (1 + alpha * alpha - 2 * alpha * cosf(2 * PI * freq));
+            float fft_theor = variance * (1 - alpha*alpha) / (1 + alpha * alpha - 2 * alpha * arm_cos_f32(2 * PI * freq));
             
             max_signif = fft_theor * chisquare;
         }
+        
+        scale *= ds;
     }
 
     if (max_power > max_signif) {
