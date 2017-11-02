@@ -23,7 +23,7 @@ uint16_t BUFFER_SIZE = 0;
 float wavelet_psi_ft(float f) {
     
     float f_diff = f - wavelet_f0;
-    return PI_1_4 * expf(-0.5f * f_diff * f_diff);//gauss(f_diff);
+    return PI_1_4 * gauss(f_diff);
 }
 
 uint16_t bit_reverse(uint16_t a, uint16_t b) {
@@ -202,7 +202,7 @@ uint16_t steps()
             if (dof < dofmin) { dof = dofmin; }
             
             float chisquare = chi2_ppf_95(dof) / dof;
-            float fft_theor = variance * (1 - alpha*alpha) / (1 + alpha * alpha - 2 * alpha * arm_cos_f32(2 * PI * freq));
+            float fft_theor = variance * (1 - alpha*alpha) / (1 + alpha * alpha - 2 * alpha * cosf(2 * PI * freq));
             
             max_signif = fft_theor * chisquare;
         }

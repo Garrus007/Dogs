@@ -414,6 +414,11 @@
               <FileType>1</FileType>
               <FilePath>.\src\Main\wavelet.c</FilePath>
             </File>
+            <File>
+              <FileName>gauss.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\Main\gauss.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
